@@ -1,0 +1,15 @@
+Project ini adalah sebuah app untuk menyimpan sebuah reeview user terkait Buku maupun Film yang telah dibaca ataupun ditonton. 
+
+User akan login terlebih dahulu, setelah itu user dapat 
+1. Mencari Buku 
+2. Mencari Film 
+3. Memberikan review terhadap Buku
+4. Memberikan review terhadap Film
+
+Pada tampilan halaman utama akan menampilkan 
+1. Daftar buku yang sedang dibaca
+2. Daftar Film yang sedang ditonton
+3. Daftar Review yang telah dibuat (baik itu film maupun buku)
+
+User akan menginput Judul Film/Buku sendiri, kemudian mengisi review, rating, status baca/tonton, beserta link gambar url buku ataupun film nya
+
