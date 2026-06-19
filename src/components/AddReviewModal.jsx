@@ -1,21 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, BookOpen, Film, Star } from 'lucide-react';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
 
-export default function AddReviewModal({ isOpen, onClose }) {
+export default function AddReviewModal({ isOpen, onClose, initialData }) {
   const { currentUser } = useAuth();
   const [loading, setLoading] = useState(false);
   
-  const [formData, setFormData] = useState({
+  const defaultFormData = {
     title: '',
-    type: 'book', // 'book' or 'movie'
+    type: 'book',
     review: '',
     rating: 5,
-    status: 'finished', // 'reading', 'watching', 'finished', 'plan_to_read', 'plan_to_watch'
+    status: 'finished',
     imageUrl: ''
-  });
+  };
+
+  const [formData, setFormData] = useState(defaultFormData);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (initialData) {
+        setFormData(initialData);
+      } else {
+        setFormData(defaultFormData);
+      }
+    }
+  }, [isOpen, initialData]);
 
   if (!isOpen) return null;
 
@@ -39,21 +51,22 @@ export default function AddReviewModal({ isOpen, onClose }) {
     
     setLoading(true);
     try {
-      const userReviewsRef = collection(db, 'users', currentUser.uid, 'reviews');
-      await addDoc(userReviewsRef, {
-        ...formData,
-        rating: Number(formData.rating),
-        createdAt: serverTimestamp()
-      });
+      if (initialData && initialData.id) {
+        const reviewRef = doc(db, 'users', currentUser.uid, 'reviews', initialData.id);
+        const { id, createdAt, ...updateData } = formData;
+        await updateDoc(reviewRef, {
+          ...updateData,
+          rating: Number(formData.rating)
+        });
+      } else {
+        const userReviewsRef = collection(db, 'users', currentUser.uid, 'reviews');
+        await addDoc(userReviewsRef, {
+          ...formData,
+          rating: Number(formData.rating),
+          createdAt: serverTimestamp()
+        });
+      }
       
-      setFormData({
-        title: '',
-        type: 'book',
-        review: '',
-        rating: 5,
-        status: 'finished',
-        imageUrl: ''
-      });
       onClose();
     } catch (error) {
       console.error("Error adding review: ", error);
@@ -68,7 +81,9 @@ export default function AddReviewModal({ isOpen, onClose }) {
         
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-dark-700/50">
-          <h3 className="text-xl font-semibold text-white">Add New Review</h3>
+          <h3 className="text-xl font-semibold text-white">
+            {initialData ? 'Edit Review' : 'Add New Review'}
+          </h3>
           <button 
             onClick={onClose}
             className="text-slate-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-dark-700"
@@ -203,7 +218,7 @@ export default function AddReviewModal({ isOpen, onClose }) {
               disabled={loading}
               className="btn-primary"
             >
-              {loading ? 'Saving...' : 'Save Review'}
+              {loading ? 'Saving...' : (initialData ? 'Update Review' : 'Save Review')}
             </button>
           </div>
         </form>

@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { LogOut, Plus, BookOpen, Film, Star, Clock } from 'lucide-react';
+import { LogOut, Plus, BookOpen, Film, Star, Clock, Edit2 } from 'lucide-react';
 import AddReviewModal from '../components/AddReviewModal';
 
 export default function Dashboard() {
@@ -11,6 +11,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [reviews, setReviews] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingReview, setEditingReview] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -79,8 +80,15 @@ export default function Dashboard() {
             <span className="text-sm">No Cover</span>
           </div>
         )}
-        <div className="absolute top-3 right-3">
+        <div className="absolute top-3 right-3 flex items-center space-x-2">
           {getStatusBadge(item.status)}
+          <button 
+            onClick={() => { setEditingReview(item); setIsModalOpen(true); }}
+            className="p-1.5 rounded-full bg-dark-900/60 text-slate-300 hover:text-white hover:bg-primary-500 transition-colors backdrop-blur-sm"
+            title="Edit Review"
+          >
+            <Edit2 className="w-3.5 h-3.5" />
+          </button>
         </div>
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-dark-900 to-transparent p-4 pt-12">
           <div className="flex justify-between items-end">
@@ -133,7 +141,7 @@ export default function Dashboard() {
         <div className="flex justify-between items-center mb-10">
           <h1 className="text-3xl font-bold text-white">Your Collection</h1>
           <button 
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => { setEditingReview(null); setIsModalOpen(true); }}
             className="btn-primary flex items-center space-x-2"
           >
             <Plus className="w-5 h-5" />
@@ -193,7 +201,7 @@ export default function Dashboard() {
                   <h3 className="text-xl font-medium text-white mb-2">No reviews yet</h3>
                   <p className="text-slate-400 mb-6">Start your collection by adding your first book or movie.</p>
                   <button 
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={() => { setEditingReview(null); setIsModalOpen(true); }}
                     className="btn-secondary"
                   >
                     Add Your First Review
@@ -214,7 +222,8 @@ export default function Dashboard() {
 
       <AddReviewModal 
         isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+        initialData={editingReview}
+        onClose={() => { setIsModalOpen(false); setEditingReview(null); }} 
       />
     </div>
   );
