@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { LogOut, Plus, BookOpen, Film, Star, Clock, Edit2 } from 'lucide-react';
+import { LogOut, Plus, BookOpen, Film, Tv, Star, Clock, Edit2, AlertTriangle } from 'lucide-react';
 import AddReviewModal from '../components/AddReviewModal';
 
 export default function Dashboard() {
@@ -12,6 +12,7 @@ export default function Dashboard() {
   const [reviews, setReviews] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingReview, setEditingReview] = useState(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -51,7 +52,7 @@ export default function Dashboard() {
   }
 
   const currentlyReading = reviews.filter(r => r.type === 'book' && r.status === 'reading');
-  const currentlyWatching = reviews.filter(r => r.type === 'movie' && r.status === 'watching');
+  const currentlyWatching = reviews.filter(r => (r.type === 'movie' || r.type === 'series') && r.status === 'watching');
 
   const getStatusBadge = (status) => {
     switch(status) {
@@ -76,7 +77,7 @@ export default function Dashboard() {
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-slate-500">
-            {item.type === 'book' ? <BookOpen className="w-12 h-12 mb-2 opacity-50" /> : <Film className="w-12 h-12 mb-2 opacity-50" />}
+            {item.type === 'book' ? <BookOpen className="w-12 h-12 mb-2 opacity-50" /> : item.type === 'series' ? <Tv className="w-12 h-12 mb-2 opacity-50" /> : <Film className="w-12 h-12 mb-2 opacity-50" />}
             <span className="text-sm">No Cover</span>
           </div>
         )}
@@ -125,7 +126,7 @@ export default function Dashboard() {
             <div className="flex items-center space-x-4">
               <span className="text-sm text-slate-400 hidden sm:block">{currentUser?.email}</span>
               <button 
-                onClick={handleLogout}
+                onClick={() => setShowLogoutConfirm(true)}
                 className="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-dark-800 transition-colors"
                 title="Logout"
               >
@@ -199,7 +200,7 @@ export default function Dashboard() {
                     <BookOpen className="w-8 h-8 text-slate-500" />
                   </div>
                   <h3 className="text-xl font-medium text-white mb-2">No reviews yet</h3>
-                  <p className="text-slate-400 mb-6">Start your collection by adding your first book or movie.</p>
+                  <p className="text-slate-400 mb-6">Start your collection by adding your first book, movie, or series.</p>
                   <button 
                     onClick={() => { setEditingReview(null); setIsModalOpen(true); }}
                     className="btn-secondary"
@@ -225,6 +226,33 @@ export default function Dashboard() {
         initialData={editingReview}
         onClose={() => { setIsModalOpen(false); setEditingReview(null); }} 
       />
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark-900/80 backdrop-blur-sm">
+          <div className="glass-panel w-full max-w-sm rounded-2xl p-6 text-center">
+            <div className="w-14 h-14 bg-red-500/10 border border-red-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-7 h-7 text-red-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-white mb-2">Log Out?</h3>
+            <p className="text-slate-400 text-sm mb-6">Are you sure you want to log out? You will need to sign in again to access your reviews.</p>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                className="btn-secondary flex-1"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { setShowLogoutConfirm(false); handleLogout(); }}
+                className="flex-1 bg-red-600 hover:bg-red-500 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 focus:ring-2 focus:ring-red-500/50 focus:outline-none active:scale-95"
+              >
+                Log Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, BookOpen, Film, Star } from 'lucide-react';
+import { X, BookOpen, Film, Tv, Star } from 'lucide-react';
 import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
@@ -40,7 +40,7 @@ export default function AddReviewModal({ isOpen, onClose, initialData }) {
     setFormData(prev => ({ 
       ...prev, 
       type,
-      status: type === 'book' ? 'reading' : 'watching' // Default status based on type
+      status: type === 'book' ? 'reading' : 'watching'
     }));
   };
 
@@ -120,6 +120,18 @@ export default function AddReviewModal({ isOpen, onClose, initialData }) {
             >
               <Film className="w-5 h-5" />
               <span className="font-medium">Movie</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTypeChange('series')}
+              className={`flex-1 flex items-center justify-center space-x-2 py-3 rounded-xl border transition-all ${
+                formData.type === 'series' 
+                  ? 'bg-purple-600/20 border-purple-500 text-purple-400' 
+                  : 'bg-dark-800 border-dark-700 text-slate-400 hover:border-dark-600'
+              }`}
+            >
+              <Tv className="w-5 h-5" />
+              <span className="font-medium">Series</span>
             </button>
           </div>
 
