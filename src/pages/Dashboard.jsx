@@ -3,13 +3,16 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { LogOut, Plus, BookOpen, Film, Tv, Star, Clock, Edit2, AlertTriangle } from 'lucide-react';
+import { LogOut, Plus, BookOpen, Film, Tv, Star, Clock, Edit2, AlertTriangle, LayoutGrid, List, ArrowUp, ArrowDown } from 'lucide-react';
 import AddReviewModal from '../components/AddReviewModal';
 
 export default function Dashboard() {
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
   const [reviews, setReviews] = useState([]);
+  const [viewMode, setViewMode] = useState('grid');
+  const [sortBy, setSortBy] = useState('date');
+  const [sortOrder, setSortOrder] = useState('desc');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingReview, setEditingReview] = useState(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -51,8 +54,22 @@ export default function Dashboard() {
     }
   }
 
-  const currentlyReading = reviews.filter(r => r.type === 'book' && r.status === 'reading');
-  const currentlyWatching = reviews.filter(r => (r.type === 'movie' || r.type === 'series') && r.status === 'watching');
+  const sortedReviews = [...reviews].sort((a, b) => {
+    let comparison = 0;
+    if (sortBy === 'date') {
+      const dateA = a.createdAt?.toMillis() || 0;
+      const dateB = b.createdAt?.toMillis() || 0;
+      comparison = dateA - dateB;
+    } else if (sortBy === 'name') {
+      comparison = (a.title || '').localeCompare(b.title || '');
+    } else if (sortBy === 'rating') {
+      comparison = (a.rating || 0) - (b.rating || 0);
+    }
+    return sortOrder === 'asc' ? comparison : -comparison;
+  });
+
+  const currentlyReading = sortedReviews.filter(r => r.type === 'book' && r.status === 'reading');
+  const currentlyWatching = sortedReviews.filter(r => (r.type === 'movie' || r.type === 'series') && r.status === 'watching');
 
   const getStatusBadge = (status) => {
     switch(status) {
@@ -67,8 +84,8 @@ export default function Dashboard() {
   };
 
   const ReviewCard = ({ item }) => (
-    <div className="glass-panel rounded-xl overflow-hidden group hover:border-primary-500/50 transition-all duration-300">
-      <div className="h-48 relative overflow-hidden bg-dark-800">
+    <div className="glass-panel rounded-xl overflow-hidden group hover:border-primary-500/50 transition-all duration-300 flex flex-col h-full">
+      <div className="h-48 relative overflow-hidden bg-dark-800 shrink-0">
         {item.imageUrl ? (
           <img 
             src={item.imageUrl} 
@@ -101,12 +118,49 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-      <div className="p-4">
+      <div className="p-4 flex-grow flex flex-col justify-between">
         <p className="text-slate-400 text-sm line-clamp-3 mb-3">"{item.review}"</p>
-        <div className="flex items-center justify-between text-xs text-slate-500">
+        <div className="flex items-center justify-between text-xs text-slate-500 mt-auto">
           <span className="flex items-center"><Clock className="w-3 h-3 mr-1" /> {item.createdAt?.toDate().toLocaleDateString() || 'Just now'}</span>
           <span className="uppercase tracking-wider font-semibold">{item.type}</span>
         </div>
+      </div>
+    </div>
+  );
+
+  const ReviewListItem = ({ item }) => (
+    <div className="glass-panel rounded-lg p-4 group hover:border-primary-500/50 transition-all duration-300 flex items-center justify-between">
+      <div className="flex items-center space-x-4 overflow-hidden">
+        <div className="w-10 h-10 rounded bg-dark-800 flex items-center justify-center shrink-0">
+          {item.type === 'book' ? <BookOpen className="w-5 h-5 text-slate-500" /> : item.type === 'series' ? <Tv className="w-5 h-5 text-slate-500" /> : <Film className="w-5 h-5 text-slate-500" />}
+        </div>
+        <div className="min-w-0">
+          <div className="flex items-center space-x-2 mb-1">
+            <h4 className="text-base font-bold text-white truncate">{item.title}</h4>
+            <div className="hidden sm:block">{getStatusBadge(item.status)}</div>
+          </div>
+          <div className="flex items-center space-x-3 text-xs text-slate-400">
+            <span className="uppercase tracking-wider font-semibold text-slate-500">{item.type}</span>
+            <span className="flex items-center"><Clock className="w-3 h-3 mr-1" /> {item.createdAt?.toDate().toLocaleDateString() || 'Just now'}</span>
+            <div className="flex items-center space-x-1">
+              <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+              <span className="font-medium text-white">{item.rating}/10</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="flex items-center space-x-4 shrink-0 ml-4">
+        <div className="hidden md:block max-w-xs text-xs text-slate-400 truncate">
+          {item.review}
+        </div>
+        <button 
+          onClick={() => { setEditingReview(item); setIsModalOpen(true); }}
+          className="p-2 rounded-lg bg-dark-800 text-slate-300 hover:text-white hover:bg-primary-500 transition-colors"
+          title="Edit Review"
+        >
+          <Edit2 className="w-4 h-4" />
+        </button>
       </div>
     </div>
   );
@@ -141,13 +195,49 @@ export default function Dashboard() {
         {/* Actions */}
         <div className="flex justify-between items-center mb-10">
           <h1 className="text-3xl font-bold text-white">Your Collection</h1>
-          <button 
-            onClick={() => { setEditingReview(null); setIsModalOpen(true); }}
-            className="btn-primary flex items-center space-x-2"
-          >
-            <Plus className="w-5 h-5" />
-            <span>Add Review</span>
-          </button>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 bg-dark-800 p-1 rounded-lg">
+              <select 
+                value={sortBy} 
+                onChange={(e) => setSortBy(e.target.value)}
+                className="bg-transparent text-slate-300 text-sm border-none focus:ring-0 cursor-pointer outline-none pl-2"
+              >
+                <option value="date" className="bg-dark-900">Date</option>
+                <option value="name" className="bg-dark-900">Name</option>
+                <option value="rating" className="bg-dark-900">Rating</option>
+              </select>
+              <button 
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                className="p-1.5 rounded-md hover:bg-dark-700 text-slate-400 hover:text-white transition-colors"
+                title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
+              >
+                {sortOrder === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
+              </button>
+            </div>
+            <div className="flex items-center bg-dark-800 p-1 rounded-lg hidden sm:flex">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-dark-700 text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}
+                title="Grid View"
+              >
+                <LayoutGrid className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-2 rounded-md transition-colors ${viewMode === 'list' ? 'bg-dark-700 text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}
+                title="List View"
+              >
+                <List className="w-5 h-5" />
+              </button>
+            </div>
+            <button 
+              onClick={() => { setEditingReview(null); setIsModalOpen(true); }}
+              className="btn-primary flex items-center space-x-2"
+            >
+              <Plus className="w-5 h-5" />
+              <span>Add Review</span>
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -164,9 +254,9 @@ export default function Dashboard() {
                   <BookOpen className="w-5 h-5 text-primary-400" />
                   <h2 className="text-xl font-semibold text-white">Currently Reading</h2>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" : "flex flex-col space-y-4"}>
                   {currentlyReading.map(book => (
-                    <ReviewCard key={book.id} item={book} />
+                    viewMode === 'grid' ? <ReviewCard key={book.id} item={book} /> : <ReviewListItem key={book.id} item={book} />
                   ))}
                 </div>
               </section>
@@ -179,9 +269,9 @@ export default function Dashboard() {
                   <Film className="w-5 h-5 text-indigo-400" />
                   <h2 className="text-xl font-semibold text-white">Currently Watching</h2>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" : "flex flex-col space-y-4"}>
                   {currentlyWatching.map(movie => (
-                    <ReviewCard key={movie.id} item={movie} />
+                    viewMode === 'grid' ? <ReviewCard key={movie.id} item={movie} /> : <ReviewListItem key={movie.id} item={movie} />
                   ))}
                 </div>
               </section>
@@ -209,9 +299,9 @@ export default function Dashboard() {
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {reviews.map(item => (
-                    <ReviewCard key={item.id} item={item} />
+                <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" : "flex flex-col space-y-4"}>
+                  {sortedReviews.map(item => (
+                    viewMode === 'grid' ? <ReviewCard key={item.id} item={item} /> : <ReviewListItem key={item.id} item={item} />
                   ))}
                 </div>
               )}
