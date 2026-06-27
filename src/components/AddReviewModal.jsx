@@ -32,8 +32,6 @@ export default function AddReviewModal({ isOpen, onClose, initialData }) {
     }
   }, [isOpen, initialData]);
 
-  if (!isOpen) return null;
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -111,6 +109,8 @@ export default function AddReviewModal({ isOpen, onClose, initialData }) {
     }
     setLoading(false);
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark-900/80 backdrop-blur-sm overflow-y-auto">
