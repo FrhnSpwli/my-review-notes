@@ -56,13 +56,13 @@ export default function AddReviewModal({ isOpen, onClose, initialData }) {
         const { id, createdAt, ...updateData } = formData;
         await updateDoc(reviewRef, {
           ...updateData,
-          rating: Number(formData.rating)
+          rating: parseFloat(formData.rating)
         });
       } else {
         const userReviewsRef = collection(db, 'users', currentUser.uid, 'reviews');
         await addDoc(userReviewsRef, {
           ...formData,
-          rating: Number(formData.rating),
+          rating: parseFloat(formData.rating),
           createdAt: serverTimestamp()
         });
       }
@@ -186,14 +186,15 @@ export default function AddReviewModal({ isOpen, onClose, initialData }) {
                   </select>
                 </div>
                 <div>
-                  <label className="label-text">Rating (1-5)</label>
+                  <label className="label-text">Rating (1-10)</label>
                   <div className="relative">
                     <input
                       type="number"
                       name="rating"
                       min="1"
-                      max="5"
-                      required
+                      max="10"
+                      step="0.01"
+                      required={formData.status === 'finished'}
                       value={formData.rating}
                       onChange={handleChange}
                       className="input-field pl-10"
@@ -208,7 +209,7 @@ export default function AddReviewModal({ isOpen, onClose, initialData }) {
               <label className="label-text">Your Review</label>
               <textarea
                 name="review"
-                required
+                required={formData.status === 'finished'}
                 value={formData.review}
                 onChange={handleChange}
                 className="input-field flex-1 resize-none min-h-[150px]"

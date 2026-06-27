@@ -13,6 +13,7 @@ export default function Dashboard() {
   const [viewMode, setViewMode] = useState('grid');
   const [sortBy, setSortBy] = useState('date');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [filterType, setFilterType] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingReview, setEditingReview] = useState(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -54,7 +55,9 @@ export default function Dashboard() {
     }
   }
 
-  const sortedReviews = [...reviews].sort((a, b) => {
+  const filteredReviews = reviews.filter(r => filterType === 'all' || r.type === filterType);
+
+  const sortedReviews = [...filteredReviews].sort((a, b) => {
     let comparison = 0;
     if (sortBy === 'date') {
       const dateA = a.createdAt?.toMillis() || 0;
@@ -70,14 +73,15 @@ export default function Dashboard() {
 
   const currentlyReading = sortedReviews.filter(r => r.type === 'book' && r.status === 'reading');
   const currentlyWatching = sortedReviews.filter(r => (r.type === 'movie' || r.type === 'series') && r.status === 'watching');
+  const planTo = sortedReviews.filter(r => r.status === 'plan_to_watch' || r.status === 'plan_to_read');
 
   const getStatusBadge = (status) => {
-    switch(status) {
+    switch (status) {
       case 'reading': return <span className="bg-blue-500/20 text-blue-400 text-xs px-2 py-1 rounded-full border border-blue-500/30">Reading</span>;
       case 'watching': return <span className="bg-indigo-500/20 text-indigo-400 text-xs px-2 py-1 rounded-full border border-indigo-500/30">Watching</span>;
       case 'finished': return <span className="bg-emerald-500/20 text-emerald-400 text-xs px-2 py-1 rounded-full border border-emerald-500/30">Finished</span>;
-      case 'plan_to_read': 
-      case 'plan_to_watch': 
+      case 'plan_to_read':
+      case 'plan_to_watch':
         return <span className="bg-amber-500/20 text-amber-400 text-xs px-2 py-1 rounded-full border border-amber-500/30">Plan to {status.includes('read') ? 'Read' : 'Watch'}</span>;
       default: return null;
     }
@@ -87,9 +91,9 @@ export default function Dashboard() {
     <div className="glass-panel rounded-xl overflow-hidden group hover:border-primary-500/50 transition-all duration-300 flex flex-col h-full">
       <div className="h-48 relative overflow-hidden bg-dark-800 shrink-0">
         {item.imageUrl ? (
-          <img 
-            src={item.imageUrl} 
-            alt={item.title} 
+          <img
+            src={item.imageUrl}
+            alt={item.title}
             className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-300 group-hover:scale-105"
           />
         ) : (
@@ -100,7 +104,7 @@ export default function Dashboard() {
         )}
         <div className="absolute top-3 right-3 flex items-center space-x-2">
           {getStatusBadge(item.status)}
-          <button 
+          <button
             onClick={() => { setEditingReview(item); setIsModalOpen(true); }}
             className="p-1.5 rounded-full bg-dark-900/60 text-slate-300 hover:text-white hover:bg-primary-500 transition-colors backdrop-blur-sm"
             title="Edit Review"
@@ -149,12 +153,12 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-      
+
       <div className="flex items-center space-x-4 shrink-0 ml-4">
         <div className="hidden md:block max-w-xs text-xs text-slate-400 truncate">
           {item.review}
         </div>
-        <button 
+        <button
           onClick={() => { setEditingReview(item); setIsModalOpen(true); }}
           className="p-2 rounded-lg bg-dark-800 text-slate-300 hover:text-white hover:bg-primary-500 transition-colors"
           title="Edit Review"
@@ -179,7 +183,7 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-slate-400 hidden sm:block">{currentUser?.email}</span>
-              <button 
+              <button
                 onClick={() => setShowLogoutConfirm(true)}
                 className="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-dark-800 transition-colors"
                 title="Logout"
@@ -194,11 +198,23 @@ export default function Dashboard() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
         {/* Actions */}
         <div className="flex justify-between items-center mb-10">
-          <h1 className="text-3xl font-bold text-white">Your Collection</h1>
+          <h1 className="text-3xl font-bold text-white">My Collection</h1>
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2 bg-dark-800 p-1 rounded-lg">
-              <select 
-                value={sortBy} 
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                className="bg-transparent text-slate-300 text-sm border-none focus:ring-0 cursor-pointer outline-none pl-2"
+              >
+                <option value="all" className="bg-dark-900">All Types</option>
+                <option value="movie" className="bg-dark-900">Movie</option>
+                <option value="series" className="bg-dark-900">Series</option>
+                <option value="book" className="bg-dark-900">Book</option>
+              </select>
+            </div>
+            <div className="flex items-center space-x-2 bg-dark-800 p-1 rounded-lg">
+              <select
+                value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
                 className="bg-transparent text-slate-300 text-sm border-none focus:ring-0 cursor-pointer outline-none pl-2"
               >
@@ -206,7 +222,7 @@ export default function Dashboard() {
                 <option value="name" className="bg-dark-900">Name</option>
                 <option value="rating" className="bg-dark-900">Rating</option>
               </select>
-              <button 
+              <button
                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
                 className="p-1.5 rounded-md hover:bg-dark-700 text-slate-400 hover:text-white transition-colors"
                 title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
@@ -230,7 +246,7 @@ export default function Dashboard() {
                 <List className="w-5 h-5" />
               </button>
             </div>
-            <button 
+            <button
               onClick={() => { setEditingReview(null); setIsModalOpen(true); }}
               className="btn-primary flex items-center space-x-2"
             >
@@ -246,7 +262,7 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="space-y-12">
-            
+
             {/* Currently Reading */}
             {currentlyReading.length > 0 && (
               <section>
@@ -257,6 +273,21 @@ export default function Dashboard() {
                 <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" : "flex flex-col space-y-4"}>
                   {currentlyReading.map(book => (
                     viewMode === 'grid' ? <ReviewCard key={book.id} item={book} /> : <ReviewListItem key={book.id} item={book} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Plan To */}
+            {planTo.length > 0 && (
+              <section>
+                <div className="flex items-center space-x-2 mb-6 border-b border-dark-800 pb-2">
+                  <Clock className="w-5 h-5 text-amber-400" />
+                  <h2 className="text-xl font-semibold text-white">Plan to Watch/Read</h2>
+                </div>
+                <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" : "flex flex-col space-y-4"}>
+                  {planTo.map(item => (
+                    viewMode === 'grid' ? <ReviewCard key={item.id} item={item} /> : <ReviewListItem key={item.id} item={item} />
                   ))}
                 </div>
               </section>
@@ -283,7 +314,7 @@ export default function Dashboard() {
                 <Star className="w-5 h-5 text-emerald-400" />
                 <h2 className="text-xl font-semibold text-white">All Reviews</h2>
               </div>
-              
+
               {reviews.length === 0 ? (
                 <div className="text-center py-20 glass-panel rounded-2xl">
                   <div className="w-16 h-16 bg-dark-800 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -291,7 +322,7 @@ export default function Dashboard() {
                   </div>
                   <h3 className="text-xl font-medium text-white mb-2">No reviews yet</h3>
                   <p className="text-slate-400 mb-6">Start your collection by adding your first book, movie, or series.</p>
-                  <button 
+                  <button
                     onClick={() => { setEditingReview(null); setIsModalOpen(true); }}
                     className="btn-secondary"
                   >
@@ -311,10 +342,10 @@ export default function Dashboard() {
         )}
       </main>
 
-      <AddReviewModal 
-        isOpen={isModalOpen} 
+      <AddReviewModal
+        isOpen={isModalOpen}
         initialData={editingReview}
-        onClose={() => { setIsModalOpen(false); setEditingReview(null); }} 
+        onClose={() => { setIsModalOpen(false); setEditingReview(null); }}
       />
 
       {/* Logout Confirmation Modal */}
