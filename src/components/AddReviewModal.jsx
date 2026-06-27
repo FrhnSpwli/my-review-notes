@@ -7,6 +7,9 @@ import { useAuth } from '../contexts/AuthContext';
 export default function AddReviewModal({ isOpen, onClose, initialData }) {
   const { currentUser } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showResults, setShowResults] = useState(false);
   
   const defaultFormData = {
     title: '',
@@ -29,11 +32,43 @@ export default function AddReviewModal({ isOpen, onClose, initialData }) {
     }
   }, [isOpen, initialData]);
 
-  if (!isOpen) return null;
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === 'title' && formData.type === 'book') {
+      setShowResults(true);
+    }
+  };
+
+  useEffect(() => {
+    if (formData.type !== 'book' || formData.title.trim().length < 3 || !showResults) {
+      setSearchResults([]);
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const res = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(formData.title)}&limit=5`);
+        const data = await res.json();
+        setSearchResults(data.docs || []);
+      } catch (err) {
+        console.error("Error fetching books:", err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [formData.title, formData.type, showResults]);
+
+  const handleSelectBook = (book) => {
+    setFormData(prev => ({
+      ...prev,
+      title: book.title,
+      imageUrl: book.cover_i ? `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg` : prev.imageUrl
+    }));
+    setShowResults(false);
   };
 
   const handleTypeChange = (type) => {
@@ -74,6 +109,8 @@ export default function AddReviewModal({ isOpen, onClose, initialData }) {
     }
     setLoading(false);
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark-900/80 backdrop-blur-sm overflow-y-auto">
@@ -137,7 +174,7 @@ export default function AddReviewModal({ isOpen, onClose, initialData }) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-6">
-              <div>
+              <div className="relative">
                 <label className="label-text">Title</label>
                 <input
                   type="text"
@@ -145,9 +182,42 @@ export default function AddReviewModal({ isOpen, onClose, initialData }) {
                   required
                   value={formData.title}
                   onChange={handleChange}
+                  onFocus={() => {
+                    if (formData.type === 'book' && formData.title.trim().length >= 3) {
+                      setShowResults(true);
+                    }
+                  }}
+                  onBlur={() => {
+                    // Small delay to allow click on result
+                    setTimeout(() => setShowResults(false), 200);
+                  }}
                   className="input-field"
                   placeholder={`Enter ${formData.type} title`}
+                  autoComplete="off"
                 />
+                
+                {formData.type === 'book' && showResults && formData.title.trim().length >= 3 && (
+                  <div className="absolute z-10 w-full mt-1 bg-dark-800 border border-dark-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {isSearching ? (
+                      <div className="p-3 text-sm text-slate-400 text-center">Searching...</div>
+                    ) : searchResults.length > 0 ? (
+                      searchResults.map((book, idx) => (
+                        <div 
+                          key={book.key || idx} 
+                          onClick={() => handleSelectBook(book)}
+                          className="p-3 hover:bg-dark-700 cursor-pointer flex flex-col border-b border-dark-700/50 last:border-0"
+                        >
+                          <span className="font-medium text-white truncate">{book.title}</span>
+                          {book.author_name && (
+                            <span className="text-xs text-slate-400 truncate">by {book.author_name.join(', ')}</span>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-3 text-sm text-slate-400 text-center">No results found (you can still add manually)</div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div>
