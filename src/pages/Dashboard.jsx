@@ -74,6 +74,7 @@ export default function Dashboard() {
   const currentlyReading = sortedReviews.filter(r => r.type === 'book' && r.status === 'reading');
   const currentlyWatching = sortedReviews.filter(r => (r.type === 'movie' || r.type === 'series') && r.status === 'watching');
   const planTo = sortedReviews.filter(r => r.status === 'plan_to_watch' || r.status === 'plan_to_read');
+  const completed = sortedReviews.filter(r => r.status === 'finished');
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -263,21 +264,6 @@ export default function Dashboard() {
         ) : (
           <div className="space-y-12">
 
-            {/* Currently Reading */}
-            {currentlyReading.length > 0 && (
-              <section>
-                <div className="flex items-center space-x-2 mb-6 border-b border-dark-800 pb-2">
-                  <BookOpen className="w-5 h-5 text-primary-400" />
-                  <h2 className="text-xl font-semibold text-white">Currently Reading</h2>
-                </div>
-                <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" : "flex flex-col space-y-4"}>
-                  {currentlyReading.map(book => (
-                    viewMode === 'grid' ? <ReviewCard key={book.id} item={book} /> : <ReviewListItem key={book.id} item={book} />
-                  ))}
-                </div>
-              </section>
-            )}
-
             {/* Plan To */}
             {planTo.length > 0 && (
               <section>
@@ -293,6 +279,21 @@ export default function Dashboard() {
               </section>
             )}
 
+            {/* Currently Reading */}
+            {currentlyReading.length > 0 && (
+              <section>
+                <div className="flex items-center space-x-2 mb-6 border-b border-dark-800 pb-2">
+                  <BookOpen className="w-5 h-5 text-primary-400" />
+                  <h2 className="text-xl font-semibold text-white">Currently Reading</h2>
+                </div>
+                <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" : "flex flex-col space-y-4"}>
+                  {currentlyReading.map(book => (
+                    viewMode === 'grid' ? <ReviewCard key={book.id} item={book} /> : <ReviewListItem key={book.id} item={book} />
+                  ))}
+                </div>
+              </section>
+            )}
+
             {/* Currently Watching */}
             {currentlyWatching.length > 0 && (
               <section>
@@ -303,6 +304,21 @@ export default function Dashboard() {
                 <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" : "flex flex-col space-y-4"}>
                   {currentlyWatching.map(movie => (
                     viewMode === 'grid' ? <ReviewCard key={movie.id} item={movie} /> : <ReviewListItem key={movie.id} item={movie} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Completed */}
+            {completed.length > 0 && (
+              <section>
+                <div className="flex items-center space-x-2 mb-6 border-b border-dark-800 pb-2">
+                  <BookOpen className="w-5 h-5 text-emerald-400" />
+                  <h2 className="text-xl font-semibold text-white">Completed</h2>
+                </div>
+                <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" : "flex flex-col space-y-4"}>
+                  {completed.map(completed => (
+                    viewMode === 'grid' ? <ReviewCard key={completed.id} item={completed} /> : <ReviewListItem key={completed.id} item={completed} />
                   ))}
                 </div>
               </section>

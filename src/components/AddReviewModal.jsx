@@ -35,13 +35,13 @@ export default function AddReviewModal({ isOpen, onClose, initialData }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    if (name === 'title' && formData.type === 'book') {
+    if (name === 'title') {
       setShowResults(true);
     }
   };
 
   useEffect(() => {
-    if (formData.type !== 'book' || formData.title.trim().length < 3 || !showResults) {
+    if (formData.title.trim().length < 3 || !showResults) {
       setSearchResults([]);
       return;
     }
@@ -49,11 +49,23 @@ export default function AddReviewModal({ isOpen, onClose, initialData }) {
     const delayDebounceFn = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const res = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(formData.title)}&limit=5`);
+        let url;
+        if (formData.type === 'book') {
+          url = `https://openlibrary.org/search.json?q=${encodeURIComponent(formData.title)}&limit=5`;
+        } else {
+          url = `https://www.omdbapi.com/?s=${encodeURIComponent(formData.title)}&type=${formData.type}&apikey=878cc337`;
+        }
+
+        const res = await fetch(url);
         const data = await res.json();
-        setSearchResults(data.docs || []);
+        
+        if (formData.type === 'book') {
+          setSearchResults(data.docs ? data.docs.slice(0, 5) : []);
+        } else {
+          setSearchResults(data.Search ? data.Search.slice(0, 5) : []);
+        }
       } catch (err) {
-        console.error("Error fetching books:", err);
+        console.error(`Error fetching ${formData.type}s:`, err);
       } finally {
         setIsSearching(false);
       }
@@ -62,11 +74,20 @@ export default function AddReviewModal({ isOpen, onClose, initialData }) {
     return () => clearTimeout(delayDebounceFn);
   }, [formData.title, formData.type, showResults]);
 
-  const handleSelectBook = (book) => {
+  const handleSelectItem = (item) => {
+    let newTitle = item.title || item.Title;
+    let newImage = prev => prev.imageUrl;
+
+    if (formData.type === 'book') {
+      newImage = item.cover_i ? `https://covers.openlibrary.org/b/id/${item.cover_i}-L.jpg` : formData.imageUrl;
+    } else {
+      newImage = item.Poster !== 'N/A' && item.Poster ? item.Poster : formData.imageUrl;
+    }
+
     setFormData(prev => ({
       ...prev,
-      title: book.title,
-      imageUrl: book.cover_i ? `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg` : prev.imageUrl
+      title: newTitle,
+      imageUrl: newImage
     }));
     setShowResults(false);
   };
@@ -183,7 +204,7 @@ export default function AddReviewModal({ isOpen, onClose, initialData }) {
                   value={formData.title}
                   onChange={handleChange}
                   onFocus={() => {
-                    if (formData.type === 'book' && formData.title.trim().length >= 3) {
+                    if (formData.title.trim().length >= 3) {
                       setShowResults(true);
                     }
                   }}
@@ -196,23 +217,31 @@ export default function AddReviewModal({ isOpen, onClose, initialData }) {
                   autoComplete="off"
                 />
                 
-                {formData.type === 'book' && showResults && formData.title.trim().length >= 3 && (
+                {showResults && formData.title.trim().length >= 3 && (
                   <div className="absolute z-10 w-full mt-1 bg-dark-800 border border-dark-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     {isSearching ? (
                       <div className="p-3 text-sm text-slate-400 text-center">Searching...</div>
                     ) : searchResults.length > 0 ? (
-                      searchResults.map((book, idx) => (
-                        <div 
-                          key={book.key || idx} 
-                          onClick={() => handleSelectBook(book)}
-                          className="p-3 hover:bg-dark-700 cursor-pointer flex flex-col border-b border-dark-700/50 last:border-0"
-                        >
-                          <span className="font-medium text-white truncate">{book.title}</span>
-                          {book.author_name && (
-                            <span className="text-xs text-slate-400 truncate">by {book.author_name.join(', ')}</span>
-                          )}
-                        </div>
-                      ))
+                      searchResults.map((item, idx) => {
+                        const title = item.title || item.Title;
+                        const key = item.key || item.imdbID || idx;
+                        const subtitle = formData.type === 'book' 
+                          ? (item.author_name ? `by ${item.author_name.join(', ')}` : '')
+                          : item.Year;
+
+                        return (
+                          <div 
+                            key={key} 
+                            onClick={() => handleSelectItem(item)}
+                            className="p-3 hover:bg-dark-700 cursor-pointer flex flex-col border-b border-dark-700/50 last:border-0"
+                          >
+                            <span className="font-medium text-white truncate">{title}</span>
+                            {subtitle && (
+                              <span className="text-xs text-slate-400 truncate">{subtitle}</span>
+                            )}
+                          </div>
+                        );
+                      })
                     ) : (
                       <div className="p-3 text-sm text-slate-400 text-center">No results found (you can still add manually)</div>
                     )}
