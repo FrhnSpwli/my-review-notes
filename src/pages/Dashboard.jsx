@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { LogOut, Plus, BookOpen, Film, Tv, Star, Clock, Edit2, AlertTriangle, LayoutGrid, List, ArrowUp, ArrowDown } from 'lucide-react';
+import { LogOut, Plus, BookOpen, Film, Tv, Star, Clock, Edit2, Trash2, AlertTriangle, LayoutGrid, List, ArrowUp, ArrowDown } from 'lucide-react';
 import AddReviewModal from '../components/AddReviewModal';
+import ViewReviewModal from '../components/ViewReviewModal';
 
 export default function Dashboard() {
   const { currentUser, logout } = useAuth();
@@ -16,6 +17,10 @@ export default function Dashboard() {
   const [filterType, setFilterType] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingReview, setEditingReview] = useState(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [viewingReview, setViewingReview] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [reviewToDelete, setReviewToDelete] = useState(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -55,6 +60,17 @@ export default function Dashboard() {
     }
   }
 
+  async function handleDeleteReview() {
+    if (!reviewToDelete || !currentUser) return;
+    try {
+      await deleteDoc(doc(db, 'users', currentUser.uid, 'reviews', reviewToDelete.id));
+      setShowDeleteConfirm(false);
+      setReviewToDelete(null);
+    } catch (error) {
+      console.error("Error deleting review: ", error);
+    }
+  }
+
   const filteredReviews = reviews.filter(r => filterType === 'all' || r.type === filterType);
 
   const sortedReviews = [...filteredReviews].sort((a, b) => {
@@ -89,7 +105,10 @@ export default function Dashboard() {
   };
 
   const ReviewCard = ({ item }) => (
-    <div className="glass-panel rounded-xl overflow-hidden group hover:border-primary-500/50 transition-all duration-300 flex flex-col h-full">
+    <div 
+      className="glass-panel rounded-xl overflow-hidden group hover:border-primary-500/50 transition-all duration-300 flex flex-col h-full cursor-pointer"
+      onClick={() => { setViewingReview(item); setIsViewModalOpen(true); }}
+    >
       <div className="h-48 relative overflow-hidden bg-dark-800 shrink-0">
         {item.imageUrl ? (
           <img
@@ -106,11 +125,18 @@ export default function Dashboard() {
         <div className="absolute top-3 right-3 flex items-center space-x-2">
           {getStatusBadge(item.status)}
           <button
-            onClick={() => { setEditingReview(item); setIsModalOpen(true); }}
-            className="p-1.5 rounded-full bg-dark-900/60 text-slate-300 hover:text-white hover:bg-primary-500 transition-colors backdrop-blur-sm"
+            onClick={(e) => { e.stopPropagation(); setEditingReview(item); setIsModalOpen(true); }}
+            className="p-1.5 rounded-full bg-dark-900/60 text-slate-300 hover:text-white hover:bg-primary-500 transition-colors backdrop-blur-sm z-10 relative"
             title="Edit Review"
           >
             <Edit2 className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setReviewToDelete(item); setShowDeleteConfirm(true); }}
+            className="p-1.5 rounded-full bg-dark-900/60 text-slate-300 hover:text-white hover:bg-red-500 transition-colors backdrop-blur-sm z-10 relative"
+            title="Delete Review"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-dark-900 to-transparent p-4 pt-12">
@@ -134,7 +160,10 @@ export default function Dashboard() {
   );
 
   const ReviewListItem = ({ item }) => (
-    <div className="glass-panel rounded-lg p-4 group hover:border-primary-500/50 transition-all duration-300 flex items-center justify-between">
+    <div 
+      className="glass-panel rounded-lg p-4 group hover:border-primary-500/50 transition-all duration-300 flex items-center justify-between cursor-pointer"
+      onClick={() => { setViewingReview(item); setIsViewModalOpen(true); }}
+    >
       <div className="flex items-center space-x-4 overflow-hidden">
         <div className="w-10 h-10 rounded bg-dark-800 flex items-center justify-center shrink-0">
           {item.type === 'book' ? <BookOpen className="w-5 h-5 text-slate-500" /> : item.type === 'series' ? <Tv className="w-5 h-5 text-slate-500" /> : <Film className="w-5 h-5 text-slate-500" />}
@@ -159,13 +188,22 @@ export default function Dashboard() {
         <div className="hidden md:block max-w-xs text-xs text-slate-400 truncate">
           {item.review}
         </div>
-        <button
-          onClick={() => { setEditingReview(item); setIsModalOpen(true); }}
-          className="p-2 rounded-lg bg-dark-800 text-slate-300 hover:text-white hover:bg-primary-500 transition-colors"
-          title="Edit Review"
-        >
-          <Edit2 className="w-4 h-4" />
-        </button>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={(e) => { e.stopPropagation(); setEditingReview(item); setIsModalOpen(true); }}
+            className="p-2 rounded-lg bg-dark-800 text-slate-300 hover:text-white hover:bg-primary-500 transition-colors z-10 relative"
+            title="Edit Review"
+          >
+            <Edit2 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setReviewToDelete(item); setShowDeleteConfirm(true); }}
+            className="p-2 rounded-lg bg-dark-800 text-slate-300 hover:text-white hover:bg-red-500 transition-colors z-10 relative"
+            title="Delete Review"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -364,6 +402,12 @@ export default function Dashboard() {
         onClose={() => { setIsModalOpen(false); setEditingReview(null); }}
       />
 
+      <ViewReviewModal
+        isOpen={isViewModalOpen}
+        reviewData={viewingReview}
+        onClose={() => { setIsViewModalOpen(false); setViewingReview(null); }}
+      />
+
       {/* Logout Confirmation Modal */}
       {showLogoutConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark-900/80 backdrop-blur-sm">
@@ -385,6 +429,33 @@ export default function Dashboard() {
                 className="flex-1 bg-red-600 hover:bg-red-500 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 focus:ring-2 focus:ring-red-500/50 focus:outline-none active:scale-95"
               >
                 Log Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark-900/80 backdrop-blur-sm">
+          <div className="glass-panel w-full max-w-sm rounded-2xl p-6 text-center">
+            <div className="w-14 h-14 bg-red-500/10 border border-red-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="w-7 h-7 text-red-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-white mb-2">Delete Review?</h3>
+            <p className="text-slate-400 text-sm mb-6">Are you sure you want to delete this review? This action cannot be undone.</p>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => { setShowDeleteConfirm(false); setReviewToDelete(null); }}
+                className="btn-secondary flex-1"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteReview}
+                className="flex-1 bg-red-600 hover:bg-red-500 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 focus:ring-2 focus:ring-red-500/50 focus:outline-none active:scale-95"
+              >
+                Delete
               </button>
             </div>
           </div>
