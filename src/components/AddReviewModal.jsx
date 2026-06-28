@@ -15,7 +15,7 @@ export default function AddReviewModal({ isOpen, onClose, initialData }) {
     title: '',
     type: 'movie',
     review: '',
-    rating: 0,
+    rating: "",
     status: 'finished',
     imageUrl: 'https://t4.ftcdn.net/jpg/02/12/52/91/360_F_212529193_YRhcQCaJB9ugv5dFzqK25Uo9Ivm7B9Ca.jpg'
   };
