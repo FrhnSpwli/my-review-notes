@@ -1,16 +1,54 @@
-# React + Vite
+# MyReviewNotes
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+MyReviewNotes is a modern, sleek web application built with React and Firebase that helps you track and review the movies, TV series, and books you've consumed or plan to consume.
 
-Currently, two official plugins are available:
+## ✨ Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Media Tracking:** Keep track of what you are currently watching/reading, what you plan to watch/read, and what you've finished.
+- **Smart Autocomplete:** Add new items quickly using integrated APIs:
+  - **Books:** Powered by the [OpenLibrary API](https://openlibrary.org/).
+  - **Movies & Series:** Powered by the [OMDB API](https://www.omdbapi.com/).
+- **Rich User Interface:** A dark-themed, glassmorphism-inspired UI with smooth transitions and micro-animations.
+- **Sorting & Filtering:** Easily filter your collection by media type (Movie, Series, Book) and sort by Date, Name, or Rating.
+- **Authentication:** Secure user accounts managed via Firebase Authentication.
+- **Cloud Storage:** Your reviews are safely stored and synced in real-time using Cloud Firestore.
 
-## React Compiler
+## 🚀 Technologies Used
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend:** React, React Router
+- **Styling:** Tailwind CSS, Lucide React (for icons)
+- **Backend/Database:** Firebase (Auth, Firestore)
+- **Build Tool:** Vite
 
-## Expanding the ESLint configuration
+## 📦 Setup and Installation
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/FrhnSpwli/my-review-notes.git
+   cd my-review-notes
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Configure Firebase:**
+   Create a `.env` file in the root directory (or update the config directly in `src/firebase/config.js`) and add your Firebase project credentials:
+   ```env
+   VITE_FIREBASE_API_KEY=your_api_key
+   VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
+   VITE_FIREBASE_PROJECT_ID=your_project_id
+   VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+   VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+   VITE_FIREBASE_APP_ID=your_app_id
+   ```
+
+4. **Start the development server:**
+   ```bash
+   npm run dev
+   ```
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome! Feel free to check the issues page or submit a Pull Request.
