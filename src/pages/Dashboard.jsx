@@ -218,7 +218,7 @@ export default function Dashboard() {
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-indigo-600 flex items-center justify-center">
                 <BookOpen className="w-4 h-4 text-white" />
               </div>
-              <span className="text-xl font-bold text-white tracking-tight">MyReview<span className="text-primary-400">Notes</span></span>
+              <span className="text-xl font-bold text-white tracking-tight">Rate<span className="text-primary-400">&Notes</span></span>
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-slate-400 hidden sm:block">{currentUser?.email}</span>
