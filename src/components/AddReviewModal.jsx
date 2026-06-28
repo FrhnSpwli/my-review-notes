@@ -13,11 +13,11 @@ export default function AddReviewModal({ isOpen, onClose, initialData }) {
   
   const defaultFormData = {
     title: '',
-    type: 'book',
+    type: 'movie',
     review: '',
-    rating: 5,
+    rating: 0,
     status: 'finished',
-    imageUrl: ''
+    imageUrl: 'https://t4.ftcdn.net/jpg/02/12/52/91/360_F_212529193_YRhcQCaJB9ugv5dFzqK25Uo9Ivm7B9Ca.jpg'
   };
 
   const [formData, setFormData] = useState(defaultFormData);
