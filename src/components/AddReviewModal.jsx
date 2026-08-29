@@ -17,6 +17,7 @@ export default function AddReviewModal({ isOpen, onClose, initialData }) {
     review: '',
     rating: "",
     status: 'finished',
+    date: new Date().toISOString().split('T')[0],
     imageUrl: 'https://t4.ftcdn.net/jpg/02/12/52/91/360_F_212529193_YRhcQCaJB9ugv5dFzqK25Uo9Ivm7B9Ca.jpg'
   };
 
@@ -25,7 +26,15 @@ export default function AddReviewModal({ isOpen, onClose, initialData }) {
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
-        setFormData(initialData);
+        let initialDate = initialData.date;
+        if (!initialDate && initialData.createdAt) {
+          const dateObj = initialData.createdAt.toDate();
+          const y = dateObj.getFullYear();
+          const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+          const d = String(dateObj.getDate()).padStart(2, '0');
+          initialDate = `${y}-${m}-${d}`;
+        }
+        setFormData({ ...initialData, date: initialDate || defaultFormData.date });
       } else {
         setFormData(defaultFormData);
       }
@@ -302,6 +311,18 @@ export default function AddReviewModal({ isOpen, onClose, initialData }) {
                   </div>
                 </div>
               </div>
+
+              <div>
+                <label className="label-text">Date</label>
+                <input
+                  type="date"
+                  name="date"
+                  value={formData.date || ''}
+                  onChange={handleChange}
+                  className="input-field w-full"
+                  required
+                />
+              </div>
             </div>
 
             <div className="h-full flex flex-col">
@@ -311,7 +332,7 @@ export default function AddReviewModal({ isOpen, onClose, initialData }) {
                 required={formData.status === 'finished'}
                 value={formData.review}
                 onChange={handleChange}
-                className="input-field flex-1 resize-none min-h-[150px]"
+                className="input-field flex-1 resize-none min-h-37.5"
                 placeholder="What did you think about it?"
               ></textarea>
             </div>

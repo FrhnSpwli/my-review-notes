@@ -3,12 +3,13 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, orderBy, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { LogOut, Plus, BookOpen, Film, Tv, Star, Clock, Edit2, Trash2, AlertTriangle, LayoutGrid, List, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, BookOpen, Film, Tv, Star, Clock, Edit2, Trash2, AlertTriangle, LayoutGrid, List, ArrowUp, ArrowDown } from 'lucide-react';
 import AddReviewModal from '../components/AddReviewModal';
 import ViewReviewModal from '../components/ViewReviewModal';
+import Header from '../components/Header';
 
 export default function Dashboard() {
-  const { currentUser, logout } = useAuth();
+  const { currentUser } = useAuth();
   const navigate = useNavigate();
   const [reviews, setReviews] = useState([]);
   const [viewMode, setViewMode] = useState('grid');
@@ -21,7 +22,6 @@ export default function Dashboard() {
   const [viewingReview, setViewingReview] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [reviewToDelete, setReviewToDelete] = useState(null);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -51,15 +51,6 @@ export default function Dashboard() {
     return unsubscribe;
   }, [currentUser]);
 
-  async function handleLogout() {
-    try {
-      await logout();
-      navigate('/login');
-    } catch (error) {
-      console.error("Failed to log out", error);
-    }
-  }
-
   async function handleDeleteReview() {
     if (!reviewToDelete || !currentUser) return;
     try {
@@ -70,6 +61,13 @@ export default function Dashboard() {
       console.error("Error deleting review: ", error);
     }
   }
+
+  const getDisplayDate = (item) => {
+    if (item.date) {
+      return new Date(item.date).toLocaleDateString();
+    }
+    return item.createdAt?.toDate().toLocaleDateString() || 'Just now';
+  };
 
   const filteredReviews = reviews.filter(r => filterType === 'all' || r.type === filterType);
 
@@ -139,7 +137,7 @@ export default function Dashboard() {
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-dark-900 to-transparent p-4 pt-12">
+        <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-dark-900 to-transparent p-4 pt-12">
           <div className="flex justify-between items-end">
             <h4 className="text-lg font-bold text-white leading-tight truncate pr-2">{item.title}</h4>
             <div className="flex items-center space-x-1 bg-dark-900/80 px-2 py-1 rounded-lg backdrop-blur-sm">
@@ -149,10 +147,10 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-      <div className="p-4 flex-grow flex flex-col justify-between">
+      <div className="p-4 grow flex flex-col justify-between">
         <p className="text-slate-400 text-sm line-clamp-3 mb-3">"{item.review}"</p>
         <div className="flex items-center justify-between text-xs text-slate-500 mt-auto">
-          <span className="flex items-center"><Clock className="w-3 h-3 mr-1" /> {item.createdAt?.toDate().toLocaleDateString() || 'Just now'}</span>
+          <span className="flex items-center"><Clock className="w-3 h-3 mr-1" /> {getDisplayDate(item)}</span>
           <span className="uppercase tracking-wider font-semibold">{item.type}</span>
         </div>
       </div>
@@ -175,7 +173,7 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center space-x-3 text-xs text-slate-400">
             <span className="uppercase tracking-wider font-semibold text-slate-500">{item.type}</span>
-            <span className="flex items-center"><Clock className="w-3 h-3 mr-1" /> {item.createdAt?.toDate().toLocaleDateString() || 'Just now'}</span>
+            <span className="flex items-center"><Clock className="w-3 h-3 mr-1" /> {getDisplayDate(item)}</span>
             <div className="flex items-center space-x-1">
               <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
               <span className="font-medium text-white">{item.rating}/10</span>
@@ -210,29 +208,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-dark-900 pb-20">
-      {/* Header */}
-      <header className="border-b border-dark-800 bg-dark-900/50 backdrop-blur-lg sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-indigo-600 flex items-center justify-center">
-                <BookOpen className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-xl font-bold text-white tracking-tight">Rate<span className="text-primary-400">&Notes</span></span>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-slate-400 hidden sm:block">{currentUser?.email}</span>
-              <button
-                onClick={() => setShowLogoutConfirm(true)}
-                className="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-dark-800 transition-colors"
-                title="Logout"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
         {/* Actions */}
@@ -269,7 +245,7 @@ export default function Dashboard() {
                 {sortOrder === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
               </button>
             </div>
-            <div className="flex items-center bg-dark-800 p-1 rounded-lg hidden sm:flex">
+            <div className="hidden sm:flex items-center bg-dark-800 p-1 rounded-lg">
               <button
                 onClick={() => setViewMode('grid')}
                 className={`p-2 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-dark-700 text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}
@@ -295,11 +271,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
-          </div>
-        ) : (
           <div className="space-y-12">
 
             {/* Plan To */}
@@ -393,7 +364,6 @@ export default function Dashboard() {
             </section>
 
           </div>
-        )}
       </main>
 
       <AddReviewModal
@@ -408,32 +378,11 @@ export default function Dashboard() {
         onClose={() => { setIsViewModalOpen(false); setViewingReview(null); }}
       />
 
-      {/* Logout Confirmation Modal */}
-      {showLogoutConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-dark-900/80 backdrop-blur-sm">
-          <div className="glass-panel w-full max-w-sm rounded-2xl p-6 text-center">
-            <div className="w-14 h-14 bg-red-500/10 border border-red-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="w-7 h-7 text-red-400" />
-            </div>
-            <h3 className="text-xl font-semibold text-white mb-2">Log Out?</h3>
-            <p className="text-slate-400 text-sm mb-6">Are you sure you want to log out? You will need to sign in again to access your reviews.</p>
-            <div className="flex space-x-3">
-              <button
-                onClick={() => setShowLogoutConfirm(false)}
-                className="btn-secondary flex-1"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => { setShowLogoutConfirm(false); handleLogout(); }}
-                className="flex-1 bg-red-600 hover:bg-red-500 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 focus:ring-2 focus:ring-red-500/50 focus:outline-none active:scale-95"
-              >
-                Log Out
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ViewReviewModal
+        isOpen={isViewModalOpen}
+        reviewData={viewingReview}
+        onClose={() => { setIsViewModalOpen(false); setViewingReview(null); }}
+      />
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
