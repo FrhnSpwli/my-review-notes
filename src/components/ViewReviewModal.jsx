@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, BookOpen, Film, Tv, Star, Clock } from 'lucide-react';
+import { X, BookOpen, Film, Tv, Star, Clock, Calendar } from 'lucide-react';
 
 export default function ViewReviewModal({ isOpen, onClose, reviewData }) {
   if (!isOpen || !reviewData) return null;
@@ -37,11 +37,11 @@ export default function ViewReviewModal({ isOpen, onClose, reviewData }) {
         </div>
 
         {/* Content */}
-        <div className="p-6 flex-grow flex flex-col min-h-0">
-          <div className="flex flex-col md:flex-row gap-6 flex-grow min-h-0">
+        <div className="p-6 grow flex flex-col min-h-0">
+          <div className="flex flex-col md:flex-row gap-6 grow min-h-0">
             {/* Image */}
             <div className="w-32 mx-auto md:w-1/3 md:mx-0 shrink-0">
-              <div className="aspect-[2/3] bg-dark-800 rounded-xl overflow-hidden relative shadow-lg">
+              <div className="aspect-2/3 bg-dark-800 rounded-xl overflow-hidden relative shadow-lg">
                 {reviewData.imageUrl ? (
                   <img
                     src={reviewData.imageUrl}
@@ -74,11 +74,17 @@ export default function ViewReviewModal({ isOpen, onClose, reviewData }) {
                   <Clock className="w-4 h-4 mr-2" /> 
                   {reviewData.createdAt?.toDate().toLocaleDateString() || 'Just now'}
                 </span>
+                {reviewData.date && (
+                  <span className="flex items-center bg-dark-800 px-3 py-1 rounded-lg">
+                    <Calendar className="w-4 h-4 mr-2" /> 
+                    {new Date(reviewData.date).toLocaleDateString()}
+                  </span>
+                )}
               </div>
 
-              <div className="flex-grow flex flex-col min-h-0">
+              <div className="grow flex flex-col min-h-0">
                 <h4 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-3 shrink-0">Review</h4>
-                <div className="bg-dark-800/50 rounded-xl p-5 border border-dark-700/50 flex-grow overflow-y-auto max-h-[180px] min-h-0">
+                <div className="bg-dark-800/50 rounded-xl p-5 border border-dark-700/50 grow overflow-y-auto max-h-45 min-h-0">
                   <p className="text-slate-300 whitespace-pre-wrap leading-relaxed">
                     {reviewData.review || <span className="text-slate-500 italic">No review provided.</span>}
                   </p>

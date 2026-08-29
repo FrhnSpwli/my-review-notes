@@ -12,4 +12,3 @@ Pada tampilan halaman utama akan menampilkan
 3. Daftar Review yang telah dibuat (baik itu film maupun buku)
 
 User akan menginput Judul Film/Buku sendiri, kemudian mengisi review, rating, status baca/tonton, beserta link gambar url buku ataupun film nya
-
